@@ -6,6 +6,7 @@ export interface Reading {
   temperature: number;
   ph: number;
   turbidity: number;
+  nomorKolam?: string;
 }
 
 export type ConnectionMode = 'demo' | 'websocket' | 'mqtt' | 'rest' | 'firebase';

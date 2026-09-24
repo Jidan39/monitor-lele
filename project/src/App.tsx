@@ -11,7 +11,7 @@ function App() {
   const [page, setPage] = useState<PageId>('dashboard');
   const [settings, setSettings] = useState<Settings>(() => loadSettings());
 
-  const { readings, status, reconnect } = useWaterData(settings);
+  const { readings, latest, status, reconnect } = useWaterData(settings);
 
   const handleSaveSettings = useCallback((next: Settings) => {
     setSettings(next);
@@ -55,6 +55,7 @@ function App() {
           {page === 'dashboard' && (
             <DashboardPage
               readings={readings}
+              latest={latest}
               thresholds={settings.thresholds}
               status={status}
               onReconnect={reconnect}

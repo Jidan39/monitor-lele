@@ -7,6 +7,7 @@ import { RefreshCw, Radio } from 'lucide-react';
 
 interface DashboardPageProps {
   readings: Reading[];
+  latest: Reading | null;
   thresholds: Thresholds;
   status: ConnectionStatus;
   onReconnect: () => void;
@@ -14,8 +15,8 @@ interface DashboardPageProps {
 
 const PARAMS: ParameterKey[] = ['tds', 'temperature', 'ph', 'turbidity'];
 
-export function DashboardPage({ readings, thresholds, status, onReconnect }: DashboardPageProps) {
-  const latest = readings.length ? readings[readings.length - 1] : null;
+export function DashboardPage({ readings, latest: latestLive, thresholds, status, onReconnect }: DashboardPageProps) {
+  const latest = latestLive ?? (readings.length ? readings[readings.length - 1] : null);
 
   return (
     <div className="space-y-5">

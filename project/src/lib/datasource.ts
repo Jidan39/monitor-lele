@@ -10,14 +10,36 @@ export interface DataSource {
   stop(): void;
 }
 
-function parseReading(raw: unknown): Reading | null {
+/** Ubah nilai timestamp (ms / detik, number / string) ke epoch ms. null kalau tidak valid. */
+function parseTimestamp(value: unknown): number | null {
+  const n = typeof value === 'string' && value.trim() !== '' ? Number(value) : value;
+  if (typeof n !== 'number' || !Number.isFinite(n)) return null;
+  if (n > 1e12) return n; // epoch ms
+  if (n > 1e9) return n * 1000; // epoch detik
+  return null; // misal millis() ESP32 (uptime), bukan waktu asli
+}
+
+const PUSH_CHARS = '-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz';
+
+/** Ambil waktu dari push key Firebase (8 karakter pertama berisi epoch ms). */
+function pushKeyTime(key: string): number | null {
+  if (key.length !== 20) return null;
+  let t = 0;
+  for (let i = 0; i < 8; i++) {
+    const idx = PUSH_CHARS.indexOf(key[i]);
+    if (idx < 0) return null;
+    t = t * 64 + idx;
+  }
+  return t > 1e12 ? t : null;
+}
+
+function parseReading(raw: unknown, fallbackTs: number | null): Reading | null {
   if (typeof raw !== 'object' || raw === null) return null;
   const r = raw as Record<string, unknown>;
-  const rawTs = r.timestamp;
 
-  // Kalau timestamp valid (unix epoch dalam ms), pakai. Kalau tidak, pakai waktu sekarang.
-  const ts =
-    typeof rawTs === 'number' && rawTs > 1e12 ? rawTs : Date.now();
+  // Pakai timestamp dari data kalau valid; kalau tidak, pakai fallback. Tanpa keduanya, data dilewati.
+  const ts = parseTimestamp(r.timestamp) ?? fallbackTs;
+  if (ts === null) return null;
 
   const reading: Reading = {
     timestamp: ts,
@@ -26,6 +48,9 @@ function parseReading(raw: unknown): Reading | null {
     ph: Number(r.ph ?? r.pH ?? 0),
     turbidity: Number(r.turbidity ?? r.turb ?? 0),
   };
+  if (r.nomorKolam !== undefined && r.nomorKolam !== null) {
+    reading.nomorKolam = String(r.nomorKolam);
+  }
   if (Number.isNaN(reading.tds) || Number.isNaN(reading.temperature) || Number.isNaN(reading.ph) || Number.isNaN(reading.turbidity)) {
     return null;
   }
@@ -36,9 +61,14 @@ function parseHistory(raw: unknown): Reading[] {
   if (typeof raw !== 'object' || raw === null) return [];
   const obj = raw as Record<string, unknown>;
   const out: Reading[] = [];
+  let skipped = 0;
   for (const key of Object.keys(obj)) {
-    const r = parseReading(obj[key]);
+    const r = parseReading(obj[key], parseTimestamp(key) ?? pushKeyTime(key));
     if (r) out.push(r);
+    else skipped++;
+  }
+  if (skipped > 0) {
+    console.warn(`${skipped} data history dilewati karena timestamp tidak valid atau nilainya bukan angka.`);
   }
   return out.sort((a, b) => a.timestamp - b.timestamp);
 }
@@ -98,7 +128,7 @@ export function createDataSource(
       ws.onmessage = (ev) => {
         try {
           const raw = JSON.parse(ev.data as string);
-          const reading = parseReading(raw);
+          const reading = parseReading(raw, Date.now());
           if (reading) onData(reading);
         } catch {
           // ignore malformed
@@ -129,7 +159,7 @@ export function createDataSource(
       client.on('message', (_topic, payload) => {
         try {
           const raw = JSON.parse(payload.toString());
-          const reading = parseReading(raw);
+          const reading = parseReading(raw, Date.now());
           if (reading) onData(reading);
         } catch {
           // ignore
@@ -152,7 +182,7 @@ export function createDataSource(
         const res = await fetch(restUrl);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const raw = await res.json();
-        const reading = parseReading(raw);
+        const reading = parseReading(raw, Date.now());
         if (reading) {
           onData(reading);
           onStatus(true, null);
@@ -185,7 +215,7 @@ export function createDataSource(
           (snap) => {
             if (stopped) return;
             const raw = snap.val();
-            const reading = parseReading(raw);
+            const reading = parseReading(raw, Date.now());
             if (reading) onData(reading);
           },
           (err: Error) => {

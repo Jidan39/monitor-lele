@@ -7,12 +7,13 @@ function escapeCsv(value: string): string {
 
 export function exportReadingsToCsv(readings: Reading[]): void {
   const keys: ParameterKey[] = ['tds', 'temperature', 'ph', 'turbidity'];
-  const header = ['Timestamp', 'Waktu', 'TDS (ppm)', 'Suhu (°C)', 'pH', 'Turbidity (NTU)'];
+  const header = ['Timestamp', 'Waktu', 'Nomor Kolam', 'TDS (ppm)', 'Suhu (°C)', 'pH', 'Turbidity (NTU)'];
   const rows = readings.map((r) => {
     const d = new Date(r.timestamp);
     return [
       String(r.timestamp),
       d.toLocaleString('id-ID'),
+      r.nomorKolam ?? '',
       r.tds.toFixed(2),
       r.temperature.toFixed(2),
       r.ph.toFixed(2),
