@@ -55,7 +55,15 @@ export interface ConnectionStatus {
 
 export const PARAMETER_META: Record<
   ParameterKey,
-  { label: string; unit: string; description: string }
+  {
+    label: string;
+    unit: string;
+    /** Keterangan pengganti saat parameter tidak punya satuan */
+    unitLabel?: string;
+    /** Parameter hanya punya rentang nilai, tanpa batas aman/waspada */
+    rangeOnly?: boolean;
+    description: string;
+  }
 > = {
   tds: {
     label: 'TDS',
@@ -77,9 +85,11 @@ export const PARAMETER_META: Record<
   },
   turbidity: {
     label: 'Turbidity',
-    unit: 'NTU',
+    unit: '',
+    unitLabel: 'Index Kekeruhan',
+    rangeOnly: true,
     description:
-      'Turbiditas mengukur kekeruhan air akibat partikel tersuspensi. Semakin rendah semakin jernih; air layak konsumsi < 5 NTU.',
+      'Index kekeruhan menunjukkan tingkat kekeruhan air akibat partikel tersuspensi, dengan rentang nilai 0–3000.',
   },
 };
 
@@ -87,5 +97,5 @@ export const DEFAULT_THRESHOLDS: Thresholds = {
   tds: { min: 0, max: 500, warningMin: 0, warningMax: 300 },
   temperature: { min: 15, max: 30, warningMin: 18, warningMax: 28 },
   ph: { min: 6.5, max: 8.5, warningMin: 7.0, warningMax: 8.0 },
-  turbidity: { min: 0, max: 5, warningMin: 0, warningMax: 3 },
+  turbidity: { min: 0, max: 3000, warningMin: 0, warningMax: 3000 },
 };

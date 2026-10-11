@@ -10,7 +10,8 @@ import {
 } from 'recharts';
 import type { ParameterKey, Reading, Thresholds } from '@/lib/types';
 import { PARAMETER_META } from '@/lib/types';
-import { getStatusForParam, STATUS_COLOR } from '@/lib/status';
+import { getStatusForParam } from '@/lib/status';
+import { StatusChip } from '@/components/StatusChip';
 
 interface RealtimeChartProps {
   readings: Reading[];
@@ -19,14 +20,14 @@ interface RealtimeChartProps {
 
 const PARAMS: ParameterKey[] = ['tds', 'temperature', 'ph', 'turbidity'];
 
+const STATUS_LABELS = { good: 'Normal', warning: 'Sedang', bad: 'Buruk' };
+
+// Warna grafik diatur lewat token tema di index.css
+const AXIS_TICK = { fontSize: 12, fontFamily: '"Space Grotesk", sans-serif' };
+
 export function RealtimeChart({ readings, thresholds }: RealtimeChartProps) {
-  const [selected, setSelected] = useState<ParameterKey>('tds');
+  const [selected, setSelected] = useState<ParameterKey>('ph');
   const meta = PARAMETER_META[selected];
-  const color = STATUS_COLOR[getStatusForParam(
-    readings.length ? readings[readings.length - 1][selected] : 0,
-    selected,
-    thresholds
-  )];
 
   const data = useMemo(() => {
     const cutoff = Date.now() - 24 * 60 * 60 * 1000;
@@ -40,25 +41,28 @@ export function RealtimeChart({ readings, thresholds }: RealtimeChartProps) {
   }, [readings, selected]);
 
   const latest = readings.length ? readings[readings.length - 1][selected] : null;
+  const status = latest !== null ? getStatusForParam(latest, selected, thresholds) : null;
 
   return (
-    <div className="rounded-2xl glass-strong p-5 animate-fade-in-up">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="card p-4 animate-fade-in-up sm:p-6">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h3 className="text-base font-semibold text-slate-100">Grafik Real-time (24 Jam)</h3>
-          <p className="text-xs text-slate-500">
+          <h3 className="font-display text-headline-sm text-ink">Grafik Real-time (24 Jam)</h3>
+          <p className="mt-2 text-body-sm text-muted">
             Riwayat {meta.label} {meta.unit && `(${meta.unit})`}
           </p>
         </div>
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap border border-line" role="tablist" aria-label="Parameter grafik">
           {PARAMS.map((p) => (
             <button
               key={p}
+              role="tab"
+              aria-selected={selected === p}
               onClick={() => setSelected(p)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+              className={`h-9 border-r border-line px-4 font-display text-label-md transition-colors last:border-r-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${
                 selected === p
-                  ? 'bg-cyan-500/20 text-cyan-300 ring-1 ring-cyan-400/30'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                  ? 'bg-primary-10 text-primary'
+                  : 'text-muted hover:bg-neutral/40 hover:text-ink'
               }`}
             >
               {PARAMETER_META[p].label}
@@ -67,60 +71,62 @@ export function RealtimeChart({ readings, thresholds }: RealtimeChartProps) {
         </div>
       </div>
 
-      <div className="mt-4 flex items-baseline gap-2">
-        <span className="text-3xl font-bold tabular-nums text-slate-100">
+      <div className="mt-6 flex flex-wrap items-baseline gap-x-3 gap-y-2">
+        <span className="font-display text-headline-lg tabular-nums text-ink">
           {latest !== null ? (selected === 'ph' ? latest.toFixed(2) : latest.toFixed(1)) : '--'}
         </span>
-        <span className="text-sm text-slate-500">{meta.unit}</span>
+        <span className="font-display text-label-lg text-muted">{meta.unit}</span>
+        <span className="ml-auto self-center">
+          <StatusChip level={status}>{status ? STATUS_LABELS[status] : 'Menunggu'}</StatusChip>
+        </span>
       </div>
 
       <div className="mt-4 h-72">
         {data.length > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={data} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
-              <defs>
-                <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={color} stopOpacity={0.4} />
-                  <stop offset="100%" stopColor={color} stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.1)" />
+              <CartesianGrid vertical={false} />
               <XAxis
                 dataKey="time"
-                tick={{ fill: '#64748b', fontSize: 11 }}
-                axisLine={{ stroke: 'rgba(148,163,184,0.1)' }}
+                tick={AXIS_TICK}
+                axisLine
                 tickLine={false}
                 minTickGap={40}
               />
               <YAxis
-                tick={{ fill: '#64748b', fontSize: 11 }}
-                axisLine={{ stroke: 'rgba(148,163,184,0.1)' }}
+                tick={AXIS_TICK}
+                axisLine={false}
                 tickLine={false}
                 domain={['auto', 'auto']}
               />
               <Tooltip
+                cursor={{ strokeWidth: 1 }}
                 contentStyle={{
-                  background: 'rgba(15,23,42,0.95)',
-                  border: '1px solid rgba(148,163,184,0.15)',
-                  borderRadius: '12px',
-                  fontSize: '12px',
-                  color: '#e2e8f0',
+                  background: 'rgb(var(--color-surface))',
+                  border: '1px solid rgb(var(--color-line))',
+                  borderRadius: 0,
+                  boxShadow: 'none',
+                  fontSize: '14px',
+                  color: 'rgb(var(--color-ink))',
                 }}
-                labelStyle={{ color: '#94a3b8' }}
+                labelStyle={{ color: 'rgb(var(--color-muted))' }}
+                itemStyle={{ color: 'rgb(var(--color-ink))' }}
                 formatter={(v) => [`${v} ${meta.unit}`, meta.label]}
               />
               <Area
                 type="monotone"
                 dataKey="value"
-                stroke={color}
+                stroke="currentColor"
                 strokeWidth={2}
-                fill="url(#chartGradient)"
+                fill="currentColor"
+                fillOpacity={0.08}
+                activeDot={{ r: 4, strokeWidth: 2 }}
                 animationDuration={300}
               />
             </AreaChart>
           </ResponsiveContainer>
         ) : (
-          <div className="h-full grid place-items-center text-sm text-slate-500">
+          <div className="grid h-full place-items-center border border-dashed border-line text-body-sm text-muted">
             Menunggu data...
           </div>
         )}

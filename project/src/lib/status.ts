@@ -25,7 +25,25 @@ export const STATUS_LABEL: Record<StatusLevel, string> = {
 };
 
 export const STATUS_COLOR: Record<StatusLevel, string> = {
-  good: '#10b981',
-  warning: '#f59e0b',
-  bad: '#ef4444',
+  good: '#067647',
+  warning: '#B54708',
+  bad: '#D92D20',
+};
+
+export const STATUS_CHIP: Record<StatusLevel, string> = {
+  good: 'chip-ok',
+  warning: 'chip-warn',
+  bad: 'chip-danger',
+};
+
+export const STATUS_DOT: Record<StatusLevel, string> = {
+  good: 'bg-ok',
+  warning: 'bg-warn',
+  bad: 'bg-danger',
+};
+
+export const STATUS_TEXT: Record<StatusLevel, string> = {
+  good: 'text-ok',
+  warning: 'text-warn',
+  bad: 'text-danger',
 };

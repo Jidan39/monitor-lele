@@ -29,6 +29,19 @@ export function loadSettings(): Settings {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return DEFAULT_SETTINGS;
     const parsed = JSON.parse(raw) as Partial<Settings>;
+    // Pengaturan tersimpan yang masih memakai batas turbidity skala NTU lama (0–5)
+    // diganti ke default index kekeruhan 0–3000.
+    const savedTurbidity = parsed.thresholds?.turbidity;
+    if (
+      parsed.thresholds &&
+      savedTurbidity &&
+      savedTurbidity.min === 0 &&
+      savedTurbidity.max === 5 &&
+      savedTurbidity.warningMin === 0 &&
+      savedTurbidity.warningMax === 3
+    ) {
+      parsed.thresholds = { ...parsed.thresholds, turbidity: DEFAULT_THRESHOLDS.turbidity };
+    }
     return {
       ...DEFAULT_SETTINGS,
       ...parsed,

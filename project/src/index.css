@@ -1,11 +1,44 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Rethink+Sans:wght@400;500;600&family=Space+Grotesk:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
+  color-scheme: light;
+  --color-primary: 63 53 255;
+  --color-primary-60: 112 104 255;
+  --color-primary-10: 233 231 255;
+  --color-ink: 19 21 26;
+  --color-muted: 107 114 128;
+  --color-line: 216 216 216;
+  --color-neutral: 229 231 235;
+  --color-surface: 255 255 255;
+  --color-danger: 217 45 32;
+  --color-danger-10: 254 243 242;
+  --color-ok: 6 118 71;
+  --color-ok-10: 236 253 243;
+  --color-warn: 181 71 8;
+  --color-warn-10: 255 250 235;
+}
+
+/* Tema gelap: struktur sama, kanvas tinta dan biru yang sedikit lebih terang agar terbaca */
+.dark {
   color-scheme: dark;
+  --color-primary: 112 104 255;
+  --color-primary-60: 143 137 255;
+  --color-primary-10: 29 27 69;
+  --color-ink: 243 244 246;
+  --color-muted: 156 163 175;
+  --color-line: 46 50 58;
+  --color-neutral: 35 38 45;
+  --color-surface: 14 16 20;
+  --color-danger: 249 112 102;
+  --color-danger-10: 58 21 18;
+  --color-ok: 71 205 137;
+  --color-ok-10: 11 42 28;
+  --color-warn: 253 176 34;
+  --color-warn-10: 51 35 10;
 }
 
 html,
@@ -16,18 +49,71 @@ body,
 
 body {
   margin: 0;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background: #060b14;
-  color: #e2e8f0;
+  font-family: 'Rethink Sans', system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+  background: rgb(var(--color-surface));
+  color: rgb(var(--color-ink));
   -webkit-font-smoothing: antialiased;
 }
 
 @layer components {
-  .glass {
-    @apply border border-white/10 bg-white/[0.04] backdrop-blur-xl;
+  /* Flat surfaces: thin border, no shadow */
+  .card {
+    @apply rounded-sm border border-line bg-surface;
   }
-  .glass-strong {
-    @apply border border-white/10 bg-white/[0.06] backdrop-blur-2xl;
+
+  /* Joined grid of cells separated by 1px lines */
+  .cell-grid {
+    @apply grid gap-px overflow-hidden rounded-sm border border-line bg-line;
+  }
+  .cell-grid > * {
+    @apply bg-surface;
+  }
+
+  .btn {
+    @apply inline-flex h-[46px] items-center justify-center gap-2 whitespace-nowrap rounded-none border border-transparent px-[30px] font-display text-label-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-40;
+  }
+  .btn-primary {
+    @apply bg-primary text-white enabled:hover:bg-primary-60;
+  }
+  .btn-secondary {
+    @apply border-line bg-surface text-ink enabled:hover:border-ink;
+  }
+  .btn-tertiary {
+    @apply h-auto px-0 font-sans text-body-md text-ink enabled:hover:text-primary;
+  }
+  /* Dense variant for table and toolbar controls */
+  .btn-sm {
+    @apply h-9 px-4 text-label-md;
+  }
+
+  .input {
+    @apply h-[46px] w-full rounded-none border border-line bg-surface px-4 text-body-md text-ink transition-colors placeholder:text-muted/60 hover:border-muted focus:border-primary focus:outline-none disabled:cursor-not-allowed disabled:bg-neutral/40 disabled:text-muted;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 whitespace-nowrap rounded-none bg-primary-10 px-3 py-1.5 font-display text-label-sm uppercase text-primary;
+  }
+  .chip-ok {
+    @apply bg-ok-10 text-ok;
+  }
+  .chip-warn {
+    @apply bg-warn-10 text-warn;
+  }
+  .chip-danger {
+    @apply bg-danger-10 text-danger;
+  }
+  .chip-neutral {
+    @apply bg-neutral/50 text-muted;
+  }
+
+  .eyebrow {
+    @apply font-display text-label-sm uppercase text-muted;
+  }
+
+  .icon-box {
+    @apply grid h-10 w-10 shrink-0 place-items-center border border-line text-ink;
   }
 }
 
@@ -46,20 +132,10 @@ body {
   animation: fade-in-up 0.4s ease-out both;
 }
 
-@keyframes pulse-ring {
-  0% {
-    box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.4);
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in-up {
+    animation: none;
   }
-  70% {
-    box-shadow: 0 0 0 8px rgba(34, 211, 238, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(34, 211, 238, 0);
-  }
-}
-
-.pulse-ring {
-  animation: pulse-ring 2s infinite;
 }
 
 ::-webkit-scrollbar {
@@ -70,9 +146,32 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.2);
-  border-radius: 4px;
+  background: rgb(var(--color-line));
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.35);
+  background: rgb(var(--color-muted));
+}
+
+/* Recharts menulis warna sebagai atribut SVG; aturan ini mengikatnya ke token tema */
+.recharts-cartesian-grid line {
+  stroke: rgb(var(--color-neutral));
+}
+.recharts-cartesian-axis-line {
+  stroke: rgb(var(--color-line));
+}
+.recharts-cartesian-axis-tick text {
+  fill: rgb(var(--color-muted));
+}
+.recharts-tooltip-cursor {
+  stroke: rgb(var(--color-ink));
+}
+.recharts-area-curve {
+  stroke: rgb(var(--color-primary));
+}
+.recharts-area-area {
+  fill: rgb(var(--color-primary));
+}
+.recharts-active-dot circle {
+  fill: rgb(var(--color-primary));
+  stroke: rgb(var(--color-surface));
 }
